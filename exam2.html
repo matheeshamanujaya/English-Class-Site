@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O/L Master Pro - Smart Target Plan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --grad: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --glass: rgba(255, 255, 255, 0.9);
+            /* New Countdown Colors */
+            --cd-dark: #0f172a;
+            --cd-accent: #818cf8;
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Inter', 'Segoe UI', sans-serif; }
+        
+        body { 
+            margin: 0; 
+            background: #f1f5f9;
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), 
+                              radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            color: var(--dark); 
+            min-height: 100vh;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Login Page */
+        #login-page { 
+            display: flex; justify-content: center; align-items: center; height: 100vh; 
+            background: var(--grad); 
+        }
+        .login-box { 
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 50px 40px; border-radius: 30px; text-align: center; 
+            width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .login-box input { 
+            width: 100%; padding: 15px; margin: 25px 0; border: 2px solid #e2e8f0; 
+            border-radius: 15px; outline: none; font-size: 16px; text-align: center;
+        }
+        .login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+
+        /* Dashboard */
+        #dashboard { display: none; }
+        header { 
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 15px 8%; display: flex; justify-content: space-between; 
+            align-items: center; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        header h1 { font-size: 1.2rem; font-weight: 700; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* --- UPDATED STYLISH COUNTDOWN --- */
+        .countdown-container {
+            max-width: 1000px; margin: 30px auto; padding: 0 8%;
+        }
+        .cd-wrapper {
+            background: var(--cd-dark);
+            padding: 40px 20px;
+            border-radius: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -12px rgba(15, 23, 42, 0.4);
+        }
+        /* Background Glow Effect */
+        .cd-wrapper::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            z-index: 0;
+        }
+        .cd-title {
+            position: relative; z-index: 1;
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px;
+            color: var(--cd-accent); font-weight: 700; margin-bottom: 30px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .countdown-timer {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center; gap: 15px;
+        }
+        .time-box { 
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 15px; min-width: 80px; border-radius: 20px;
+        }
+        .time-val { 
+            display: block; font-size: 2.2rem; font-weight: 800; 
+            color: #ffffff; line-height: 1; margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
+        }
+        .time-label { 
+            font-size: 0.65rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;
+        }
+        .milli-wrap {
+            position: relative; z-index: 1; margin-top: 25px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        #millis {
+            font-family: monospace; font-size: 1.1rem; font-weight: 700;
+            color: var(--danger); background: rgba(239, 68, 68, 0.1);
+            padding: 4px 12px; border-radius: 10px; min-width: 50px;
+        }
+        /* ---------------------------- */
+
+        .menu-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; 
+            padding: 20px 8% 40px; max-width: 1000px; margin: auto; 
+        }
+        .nav-card { 
+            background: var(--white); border: none; padding: 30px; border-radius: 24px; 
+            cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; align-items: center; text-decoration: none;
+        }
+        .nav-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .nav-card i { font-size: 48px; margin-bottom: 15px; }
+        .nav-card.locked { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); transform: none !important; }
+
+        .content-section { display: none; padding: 20px 8%; max-width: 1000px; margin: auto; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-card { 
+            background: var(--white); padding: 30px; border-radius: 28px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 25px; 
+        }
+        
+        .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 25px 0; }
+        .score-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: #f8fafc; padding: 12px 18px; border-radius: 16px; border: 1px solid #f1f5f9;
+        }
+        .score-row:hover { border-color: var(--primary); background: #fff; }
+        .score-row input { width: 65px; padding: 8px; border: 2px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: bold; color: var(--primary); }
+        .cat-select { border: none; background: transparent; font-weight: 600; color: #64748b; cursor: pointer; width: 60%; }
+
+        .btn-main { 
+            width: 100%; padding: 18px; border: none; border-radius: 18px; 
+            background: var(--grad); color: white; font-weight: 700; font-size: 16px;
+            cursor: pointer; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+        .btn-main:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .btn-target { 
+            width: 100%; padding: 20px; border: none; border-radius: 20px; 
+            background: #059669; color: white; font-size: 17px; font-weight: bold; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-ready { 
+            width: 100%; padding: 20px; margin-top: 30px; border: none; border-radius: 20px; 
+            background: var(--danger); color: white; font-size: 18px; font-weight: 800; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+        }
+
+        .subject-plan { 
+            margin-top: 20px; padding: 25px; background: #fff; border-radius: 24px; 
+            border-left: 10px solid var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .sub-title { font-weight: 800; font-size: 1.2rem; color: var(--dark); margin-bottom: 12px; display: block; }
+        .highlight-box { background: #fef3c7; padding: 4px 12px; border-radius: 8px; color: #d97706; font-weight: 700; }
+
+        .summary-box { 
+            background: var(--grad); color: white; padding: 35px; border-radius: 30px; 
+            margin-bottom: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .daily-task-card { 
+            background: var(--white); padding: 20px 25px; border-radius: 20px; 
+            margin-bottom: 15px; border-left: 6px solid var(--success); 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .tips-action-btn { 
+            width: 100%; padding: 22px; margin-bottom: 15px; border: 2px solid #e2e8f0; 
+            border-radius: 20px; background: #fff; color: var(--dark); font-weight: 700; 
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .tips-action-btn:hover { border-color: var(--primary); color: var(--primary); background: #f5f3ff; }
+
+        .mini-btn { 
+            padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 12px; 
+            background: #fff; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .mini-btn:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+
+        @media (max-width: 600px) {
+            .menu-grid { grid-template-columns: 1fr; padding: 20px 8%; }
+            header { padding: 15px 5%; }
+            .score-grid { grid-template-columns: 1fr; }
+            .countdown-timer { gap: 8px; }
+            .time-box { min-width: 70px; padding: 10px; }
+            .time-val { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <div class="login-box">
+        <div style="background: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.1);">
+            <i class="material-icons" style="font-size: 50px; color: var(--primary);">auto_awesome</i>
+        </div>
+        <h2 style="margin:0; color: var(--dark); font-size: 24px;">O/L Master Pro</h2>
+        <p style="color: #64748b; margin-top: 5px;">ඔබේ සිහිනයට නිවැරදි මඟ</p>
+        <input type="text" id="user-name-input" placeholder="ඔයාගේ නම ලියන්න...">
+        <button class="btn-main" onclick="login()">Dashboard යමු</button>
+    </div>
+</div>
+
+<div id="dashboard">
+    <header>
+        <h1 id="welcome-msg">ආයුබෝවන්!</h1>
+        <button onclick="logout()" style="background:#fee2e2; border:none; padding:10px 20px; border-radius:14px; cursor:pointer; font-weight: 700; color: var(--danger);">Log Out</button>
+    </header>
+
+    <div class="countdown-container">
+        <div class="cd-wrapper">
+            <div class="cd-title">
+                <i class="material-icons" style="font-size: 16px;">alarm</i>
+                විභාගය ආරම්භ වීමට තව
+            </div>
+            <div class="countdown-timer">
+                <div class="time-box">
+                    <span class="time-val" id="days">00</span>
+                    <span class="time-label">Days</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-val" id="hours">00</span>
+                    <span class="time-label">Hrs</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-val" id="mins">00</span>
+                    <span class="time-label">Min</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-val" id="secs">00</span>
+                    <span class="time-label">Sec</span>
+                </div>
+            </div>
+            <div class="milli-wrap">
+                <span id="millis">000</span>
+                <span style="color: #475569; font-size: 10px; font-weight: 700; letter-spacing: 1px;">MILLISECONDS</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="menu-grid">
+        <button class="nav-card" onclick="showSection('level-section')">
+            <i class="material-icons" style="color:var(--primary);">analytics</i>
+            <span style="font-weight: 800; font-size: 1.1rem;">මගේ මට්ටම</span>
+            <small style="color:#64748b; margin-top:5px;">ලකුණු විශ්ලේෂණය</small>
+        </button>
+        <button id="tips-card" class="nav-card locked" onclick="showSection('tips-section')">
+            <i class="material-icons" id="tips-icon" style="color:#cbd5e1;">emoji_objects</i>
+            <span style="font-weight: 800; font-size: 1.1rem;">විභාග රහස් & Plan</span>
+            <small style="color:#64748b; margin-top:5px;">9 As ඉලක්ක</small>
+        </button>
+    </div>
+
+    <div id="level-section" class="content-section">
+        <div class="glass-card">
+            <h3 style="text-align: center; margin-top:0;">විෂයන් 9 සඳහා ලකුණු ඇතුළත් කරන්න</h3>
+            <div class="score-grid">
+                <div class="score-row"><span>ගණිතය</span><input type="number" class="score-in" id="math-in"></div>
+                <div class="score-row"><span>විද්‍යාව</span><input type="number" class="score-in" id="sci-in"></div>
+                <div class="score-row"><span>ඉතිහාසය</span><input type="number" class="score-in" id="hist-in"></div>
+                <div class="score-row"><span>ඉංග්‍රීසි</span><input type="number" class="score-in" id="eng-in"></div>
+                <div class="score-row"><span>සිංහල</span><input type="number" class="score-in" id="sin-in"></div>
+                <div class="score-row"><span>ආගම</span><input type="number" class="score-in" id="rel-in"></div>
+                <div class="score-row">
+                    <select class="cat-select" id="cat1-name">
+                        <option value="කාණ්ඩ 1">කාණ්ඩ 1</option>
+                        <option value="වාණිජ්‍යය">වාණිජ්‍යය</option>
+                        <option value="පුරවැසි">පුරවැසි</option>
+                        <option value="භූගෝල">භූගෝල</option>
+                    </select>
+                    <input type="number" class="score-in" id="cat1-in">
+                </div>
+                <div class="score-row">
+                    <select class="cat-select" id="cat2-name">
+                        <option value="කාණ්ඩ 2">කාණ්ඩ 2</option>
+                        <option value="සංගීතය">සංගීතය</option>
+                        <option value="චිත්‍ර">චිත්‍ර</option>
+                        <option value="නර්තනය">නර්තනය</option>
+                    </select>
+                    <input type="number" class="score-in" id="cat2-in">
+                </div>
+                <div class="score-row">
+                    <select class="cat-select" id="cat3-name">
+                        <option value="කාණ්ඩ 3">කාණ්ඩ 3</option>
+                        <option value="ICT">ICT</option>
+                        <option value="කෘෂි">කෘෂි</option>
+                    </select>
+                    <input type="number" class="score-in" id="cat3-in">
+                </div>
+            </div>
+            <button class="btn-main" onclick="saveScores()">Confirm කරලා Graph එක බලන්න</button>
+        </div>
+
+        <div class="glass-card" id="chart-card" style="display:none;">
+            <canvas id="myChart" style="max-height: 300px;"></canvas>
+            <div id="result-container">
+                <div class="success-msg" style="margin: 30px 0; color: var(--success); font-size: 20px; font-weight: 800;">
+                    <i class="material-icons" style="vertical-align: middle;">verified</i> ඔබට 9 As වලට යන්න තවමත් පුළුවන්!
+                </div>
+                <button class="btn-target" onclick="generateSmartPlan()">
+                    <i class="material-icons">task_alt</i> 9 As වලට යන්න මම කරන්න ඕනෙ දේවල්
+                </button>
+                <div id="smart-plan-display" style="display: none; margin-top:20px;"></div>
+                <button id="final-ready-btn" class="btn-ready" style="display:none;" onclick="showFinalPlan()">
+                    <i class="material-icons">rocket_launch</i> 9As වලට යන්න Ready! වැඩ පටන්ගමු
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="final-plan-section" class="content-section">
+        <div class="glass-card" style="text-align: center;">
+            <h2 style="color:var(--dark); margin-top:0;">මගේ දෛනික ඉලක්කය 📅</h2>
+            <p style="color:#64748b;">විභාගයට තව දින කීයක් තිබේද?</p>
+            <div style="display: flex; justify-content: center; gap: 10px; align-items: center; margin: 20px 0;">
+                <input type="number" id="days-left-manual" value="30" style="width: 100px; padding: 15px; border-radius: 15px; border: 2px solid var(--primary); text-align: center; font-size: 24px; font-weight: 800; color: var(--primary);">
+                <span style="font-weight: 700; color: #64748b;">දිනයි</span>
+            </div>
+            <button class="btn-main" onclick="calculateDailyTasks()">Plan එක යාවත්කාලීන කරන්න</button>
+            <div id="daily-tasks-display" style="margin-top: 30px; text-align: left;"></div>
+            <button class="btn-main" onclick="showSection('level-section')" style="background: #64748b; margin-top: 20px; box-shadow: none;">ආපසු ප්ලෑන් එකට</button>
+        </div>
+    </div>
+
+    <div id="tips-section" class="content-section">
+        <div class="glass-card">
+            <h2 style="color:var(--dark); text-align:center; margin-top:0;">විභාග රහස් (Exam Secrets) 💡</h2>
+            <p style="text-align:center; color:#64748b; margin-bottom:30px;">වැඩි ලකුණු ලබාගැනීමට විශේෂ උපදෙස්</p>
+            <button id="mcq-tip-btn" class="tips-action-btn" onclick="alert('MCQ පේපර් එකක් අරන් වැරදුනු ප්‍රශ්න වලට අදාල සිද්ධාන්ත නැවත බලන්න. පසුව විවරණ පොතක් ආධාරයෙන් කරුණු ලියාගන්න.')">
+                <span>MCQ විවරණ කරන විදිය?</span><i class="material-icons">chevron_right</i>
+            </button>
+            <button id="essay-tip-btn" class="tips-action-btn" onclick="alert('2nd Part එකේ ලකුණු වැඩි කරගන්න නම් Marking Scheme එක බලා ලකුණු දෙන විදිය අවබෝධ කරගන්න. ප්‍රධාන කරුණු යටින් ඉරි අඳින්න.')">
+                <span>Subject-wise Target Plan එක?</span><i class="material-icons">chevron_right</i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chart;
+    let subjectData = [];
+
+    // Countdown Logic
+    function updateCountdown() {
+        const targetDate = new Date("February 17, 2026 00:00:00").getTime();
+        const now = new Date().getTime();
+        const gap = targetDate - now;
+
+        if (gap > 0) {
+            const d = Math.floor(gap / (1000 * 60 * 60 * 24));
+            const h = Math.floor((gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((gap % (1000 * 60)) / 1000);
+            const ms = gap % 1000;
+
+            document.getElementById("days").innerText = d < 10 ? "0" + d : d;
+            document.getElementById("hours").innerText = h < 10 ? "0" + h : h;
+            document.getElementById("mins").innerText = m < 10 ? "0" + m : m;
+            document.getElementById("secs").innerText = s < 10 ? "0" + s : s;
+            document.getElementById("millis").innerText = ms.toString().padStart(3, '0');
+            
+            if(!document.getElementById('days-left-manual').getAttribute('data-set')) {
+                document.getElementById('days-left-manual').value = d;
+                document.getElementById('days-left-manual').setAttribute('data-set', 'true');
+            }
+        }
+        requestAnimationFrame(updateCountdown);
+    }
+
+    function login() {
+        const name = document.getElementById('user-name-input').value;
+        if(name.trim()) { localStorage.setItem('studentName', name); location.reload(); }
+    }
+
+    function showDashboard() {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('welcome-msg').innerText = "ආයුබෝවන්, " + localStorage.getItem('studentName') + "!";
+        initChart();
+        checkLockStatus();
+        updateCountdown();
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: { 
+                labels: ['ගණිතය', 'විද්‍යාව', 'ඉතිහාසය', 'ඉංග්‍රීසි', 'සිංහල', 'ආගම', 'Cat1', 'Cat2', 'Cat3'], 
+                datasets: [{ 
+                    label: 'වත්මන් ලකුණු', 
+                    data: Array(9).fill(0), 
+                    backgroundColor: '#6366f1',
+                    borderRadius: 8
+                }] 
+            },
+            options: { 
+                responsive: true,
+                scales: { y: { beginAtZero: true, max: 100 } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function saveScores() {
+        const inputs = document.querySelectorAll('.score-in');
+        let filled = true;
+        inputs.forEach(i => { if(!i.value) filled = false; });
+        if(filled) {
+            localStorage.setItem('unlocked', 'true');
+            chart.data.datasets[0].data = Array.from(inputs).map(i => parseInt(i.value));
+            chart.update();
+            document.getElementById('chart-card').style.display = "block";
+            document.getElementById('result-container').style.display = "block";
+            checkLockStatus();
+            window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+        } else { alert("සියලු ලකුණු ඇතුළත් කරන්න."); }
+    }
+
+    function getVivaranaCount(name, score) {
+        if (["ගණිතය", "ඉංග්‍රීසි", "සිංහල"].includes(name)) return 0;
+        if (score < 40) return 360;
+        if (score < 60) return 320;
+        if (score < 80) return 280;
+        return 0;
+    }
+
+    function generateSmartPlan() {
+        subjectData = [
+            { name: "ගණිතය", score: parseInt(document.getElementById('math-in').value) || 0 },
+            { name: "විද්‍යාව", score: parseInt(document.getElementById('sci-in').value) || 0 },
+            { name: "ඉතිහාසය", score: parseInt(document.getElementById('hist-in').value) || 0 },
+            { name: "ඉංග්‍රීසි", score: parseInt(document.getElementById('eng-in').value) || 0 },
+            { name: "සිංහල", score: parseInt(document.getElementById('sin-in').value) || 0 },
+            { name: "ආගම", score: parseInt(document.getElementById('rel-in').value) || 0 },
+            { name: document.getElementById('cat1-name').value, score: parseInt(document.getElementById('cat1-in').value) || 0 },
+            { name: document.getElementById('cat2-name').value, score: parseInt(document.getElementById('cat2-in').value) || 0 },
+            { name: document.getElementById('cat3-name').value, score: parseInt(document.getElementById('cat3-in').value) || 0 }
+        ];
+
+        let html = "";
+        subjectData.forEach(s => {
+            let count = getVivaranaCount(s.name, s.score);
+            let message = "";
+            if (["ගණිතය", "ඉංග්‍රීසි", "සිංහල"].includes(s.name)) {
+                message = "ප්‍රශ්න පත්‍ර වැඩිපුර කරමින් වැරදුනු තැන් නැවත බලන්න.";
+            } else if (count > 0) {
+                message = `ලකුණු ${s.score} නිසා ඔබ අවම <span class="highlight-box">විවරණ ${count}ක්</span> කළ යුතුය.`;
+            } else {
+                message = "ඔබ දැනටමත් හොඳ මට්ටමක සිටී. ප්‍රශ්න පත්‍ර මගින් දැනුම තහවුරු කරගන්න.";
+            }
+            html += `<div class="subject-plan"><span class="sub-title">${s.name}</span><p style="color:#475569; line-height:1.6;">${message}</p><div class="action-btns" style="display:flex; gap:10px; margin-top:15px;"><button class="mini-btn" onclick="openTip('mcq')">MCQ උදව්</button><button class="mini-btn" onclick="openTip('essay')">ව්‍යුහගත උදව්</button></div></div>`;
+        });
+        document.getElementById('smart-plan-display').innerHTML = html;
+        document.getElementById('smart-plan-display').style.display = "block";
+        document.getElementById('final-ready-btn').style.display = "flex";
+        window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    }
+
+    function showFinalPlan() {
+        showSection('final-plan-section');
+        calculateDailyTasks();
+    }
+
+    function calculateDailyTasks() {
+        const days = parseInt(document.getElementById('days-left-manual').value) || 1;
+        let totalVivaranaSum = 0;
+        subjectData.forEach(s => { totalVivaranaSum += getVivaranaCount(s.name, s.score); });
+        const dailyTotal = Math.ceil(totalVivaranaSum / days);
+
+        let html = `
+            <div class="summary-box">
+                <h3 style="margin:0 0 15px 0; font-size:1.4rem;">සමස්ත සැලසුම 🚀</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div><small style="opacity:0.8;">මුළු විවරණ</small><div style="font-size:24px; font-weight:800;">${totalVivaranaSum}</div></div>
+                    <div><small style="opacity:0.8;">ඉතිරි දින</small><div style="font-size:24px; font-weight:800;">${days}</div></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.2); padding:20px; border-radius:20px; text-align:center;">
+                    <small style="display:block; margin-bottom:5px; font-weight:600;">දිනකට කළ යුතු මුළු විවරණ</small>
+                    <span style="font-size:42px; font-weight:900;">${dailyTotal}</span>
+                </div>
+            </div>
+            <h4 style="margin:20px 0 15px 10px; color:var(--dark);">විෂය අනුව විස්තරය:</h4>
+        `;
+        
+        subjectData.forEach(s => {
+            let count = getVivaranaCount(s.name, s.score);
+            if (count > 0) {
+                html += `
+                <div class="daily-task-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="font-size:18px;">${s.name}</strong>
+                        <span class="highlight-box" style="background:#dcfce7; color:#166534;">මුළු ${count}යි</span>
+                    </div>
+                </div>`;
+            }
+        });
+        document.getElementById('daily-tasks-display').innerHTML = html;
+    }
+
+    function openTip(type) {
+        showSection('tips-section');
+        setTimeout(() => {
+            if(type === 'mcq') document.getElementById('mcq-tip-btn').click();
+            else if(type === 'essay') document.getElementById('essay-tip-btn').click();
+        }, 500);
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function checkLockStatus() {
+        if(localStorage.getItem('unlocked') === 'true') {
+            document.getElementById('tips-card').classList.remove('locked');
+            document.getElementById('tips-icon').style.color = "#f59e0b";
+        }
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
+    window.onload = () => { if(localStorage.getItem('studentName')) showDashboard(); };
+</script>
+</body>
+</html>
